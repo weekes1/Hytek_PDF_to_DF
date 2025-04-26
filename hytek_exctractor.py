@@ -58,6 +58,16 @@ def extract_hytek_results(folder_path: str, output_csv: Optional[str] = None) ->
         event_dfs = []
 
         for block in event_blocks:
+
+            # Detect if prelims or finals
+            swim_type = "Unknown"
+            if 'Preliminaries' in block:
+                swim_type = "Prelims"
+            elif 'Finals' in block:
+                swim_type = "Finals"
+            else:
+                swim_type = "Finals"  # Default assumption if not explicitly stated
+
             # Find the event header
             match = re.search(r'Event (\d+)\s+(.+)', block)
             if not match:
@@ -71,7 +81,7 @@ def extract_hytek_results(folder_path: str, output_csv: Optional[str] = None) ->
             )
 
             if swimmer_lines:
-                df = pd.DataFrame(swimmer_lines, columns=['Name', 'Age', 'Team', 'Finals Time', 'Seed Time'])
+                df = pd.DataFrame(swimmer_lines, columns=['Name', 'Age', 'Team', 'Seed Time', 'Performance Time'])
                 df['EVENT'] = event_title
                 df['EVENT_NUM'] = event_number
 
@@ -86,7 +96,8 @@ def extract_hytek_results(folder_path: str, output_csv: Optional[str] = None) ->
                     df['DISTANCEXSTROKE'] = event_text[2] + event_text[5]
                     df["AGE_GROUPXGENDER"] = event_text[1] + event_text[0]
                     df['MEET'] = meet_title
-                    df['PCT_DROP_GAIN'] = ((df['Seed Time'].apply(time_to_seconds) - df['Finals Time'].apply(time_to_seconds)) / df['Seed Time'].apply(time_to_seconds)) * 100 
+                    df['SWIM_TYPE'] = swim_type
+                    df['PCT_DROP_GAIN'] = ((df['Seed Time'].apply(time_to_seconds) - df['Performance Time'].apply(time_to_seconds)) / df['Seed Time'].apply(time_to_seconds)) * 100 
                 
                 event_dfs.append(df)
 
