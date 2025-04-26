@@ -4,6 +4,18 @@ import re
 import os
 from typing import Optional
 
+def time_to_seconds(t):
+    if ':' in t:
+        # Format is like '9:38.89'
+        minutes, sec_millisec = t.split(':')
+        minutes = int(minutes)
+        seconds = float(sec_millisec)
+        total_seconds = minutes * 60 + seconds
+    else:
+        # Format is like '38.89'
+        total_seconds = float(t)
+    return total_seconds
+
 def extract_meet_title(pdf_path: str) -> str:
     with pdfplumber.open(pdf_path) as pdf:
         first_page_text = pdf.pages[0].extract_text()
@@ -66,6 +78,7 @@ def extract_hytek_results(folder_path: str, output_csv: Optional[str] = None) ->
                 # Extract details from event title
                 event_text = event_title.split(' ')
                 if len(event_text) >= 6:  # basic check
+                    df['PLACE'] = range(1, len(df) + 1)
                     df["GENDER"] = event_text[0]
                     df["AGE_GROUP"] = event_text[1]
                     df["DISTANCE"] = event_text[2]
@@ -73,6 +86,7 @@ def extract_hytek_results(folder_path: str, output_csv: Optional[str] = None) ->
                     df['DISTANCEXSTROKE'] = event_text[2] + event_text[5]
                     df["AGE_GROUPXGENDER"] = event_text[1] + event_text[0]
                     df['MEET'] = meet_title
+                    df['PCT_DROP_GAIN'] = ((df['Seed Time'].apply(time_to_seconds) - df['Finals Time'].apply(time_to_seconds)) / df['Seed Time'].apply(time_to_seconds)) * 100 
                 
                 event_dfs.append(df)
 
