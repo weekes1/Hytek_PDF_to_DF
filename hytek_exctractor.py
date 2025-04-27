@@ -57,17 +57,18 @@ def extract_hytek_results(folder_path: str, output_csv: Optional[str] = None) ->
 
         event_dfs = []
 
-        for block in event_blocks:
-
+        for i, block in enumerate(event_blocks):
+            print(i, block)
             # Detect if prelims or finals
             swim_type = "Unknown"
-            if 'Preliminaries' in block:
-                swim_type = "Prelims"
-            elif 'Finals' in block:
+            if '800 LC Meter Freestyle' in block or '1500 LC Meter Freestyle' in block:
                 swim_type = "Finals"
+            elif 'Seed Time' in block and not ('Finals Time' in block and 'Prelim Time' in block):
+                swim_type = "Prelims"
             else:
-                swim_type = "Finals"  # Default assumption if not explicitly stated
+                swim_type = "Finals"
 
+            # print('swim_type: ', swim_type)
             # Find the event header
             match = re.search(r'Event (\d+)\s+(.+)', block)
             if not match:
@@ -79,6 +80,7 @@ def extract_hytek_results(folder_path: str, output_csv: Optional[str] = None) ->
                 r'([A-Za-z &\.\'\-]+)\s+(\d+)([A-Za-z \-\&]+)\s+([\d:\.]+)\s+([\d:\.]+)',
                 block
             )
+            # print(i, swimmer_lines)
 
             if swimmer_lines:
                 df = pd.DataFrame(swimmer_lines, columns=['Name', 'Age', 'Team', 'Seed Time', 'Performance Time'])
@@ -88,7 +90,6 @@ def extract_hytek_results(folder_path: str, output_csv: Optional[str] = None) ->
                 # Extract details from event title
                 event_text = event_title.split(' ')
                 if len(event_text) >= 6:  # basic check
-                    df['PLACE'] = range(1, len(df) + 1)
                     df["GENDER"] = event_text[0]
                     df["AGE_GROUP"] = event_text[1]
                     df["DISTANCE"] = event_text[2]
@@ -103,6 +104,7 @@ def extract_hytek_results(folder_path: str, output_csv: Optional[str] = None) ->
                 event_dfs.append(df)
 
         meet_df = pd.concat(event_dfs)
+        meet_df['PLACE'] = meet_df.groupby(['EVENT', 'SWIM_TYPE']).cumcount() + 1
         meet_dfs.append(meet_df)
 
     # Combine all meets into one DataFrame
@@ -113,4 +115,6 @@ def extract_hytek_results(folder_path: str, output_csv: Optional[str] = None) ->
         results_df.to_csv(output_csv, index=False)
 
     return results_df
+
+
 
