@@ -97,7 +97,7 @@ def extract_hytek_results(folder_path: str, output_csv: Optional[str] = None) ->
                     df["AGE_GROUPXGENDER"] = event_text[1] + event_text[0]
                     df['MEET'] = meet_title
                     df['SWIM_TYPE'] = swim_type
-                    df['PCT_DROP_GAIN'] = ((df['Seed Time'].apply(time_to_seconds) - df['Performance Time'].apply(time_to_seconds)) / df['Seed Time'].apply(time_to_seconds)) * 100 
+                    df['PCT_DROP_GAIN'] = -((df['Seed Time'].apply(time_to_seconds) - df['Performance Time'].apply(time_to_seconds)) / df['Seed Time'].apply(time_to_seconds)) * 100 
 
                 df = df.applymap(lambda x: x.rstrip(')') if isinstance(x, str) else x)
                 event_dfs.append(df)
